@@ -1,0 +1,7 @@
+{
+  "name": "My Turn - Theme Park Fast Pass Monitor",
+  "description": "Automated monitoring and reservation system for theme park fast lanes, helping you skip the lines and enjoy the magic.",
+  "requestFramePermissions": [
+    "notifications"
+  ]
+}

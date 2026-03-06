@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  passwordHash   String
+  name           String?
+  externalUserId String?        // ID in the park's system
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  plans          Plan[]
+  partyMembers   PartyMember[]
+  searches       Search[]
+  bookings       Booking[]
+}
+
+model Plan {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  type            String   // FREE, DAY, WEEK
+  startDate       DateTime
+  endDate         DateTime
+  status          String   // ACTIVE, EXPIRED, CANCELLED
+  stripeSessionId String?
+  createdAt       DateTime @default(now())
+}
+
+model PartyMember {
+  id               String @id @default(cuid())
+  userId           String
+  user             User   @relation(fields: [userId], references: [id])
+  externalMemberId String // ID in the park's system
+  name             String
+  status           String // PENDING, ACTIVE
+}
+
+model Park {
+  id          String       @id @default(cuid())
+  name        String
+  code        String       @unique // MK, EPCOT, HS, AK
+  timezone    String
+  attractions Attraction[]
+}
+
+model Attraction {
+  id           String    @id @default(cuid())
+  parkId       String
+  park         Park      @relation(fields: [parkId], references: [id])
+  name         String
+  externalId   String    @unique
+  isLlEligible Boolean   @default(true)
+  imageUrl     String?
+  searches     Search[]
+  bookings     Booking[]
+}
+
+model Search {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  attractionId    String
+  attraction      Attraction @relation(fields: [attractionId], references: [id])
+  timeWindow      String    // ASAP, MORNING, AFTERNOON, EVENING, NIGHT, ANYTIME
+  partyMemberIds  String    // JSON array of PartyMember IDs
+  status          String    // ACTIVE, PAUSED, COMPLETED, CANCELLED
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  bookings        Booking[]
+  attempts        SearchAttempt[]
+}
+
+model Booking {
+  id           String     @id @default(cuid())
+  searchId     String
+  search       Search     @relation(fields: [searchId], references: [id])
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  attractionId String
+  attraction   Attraction @relation(fields: [attractionId], references: [id])
+  returnTime   DateTime
+  bookedAt     DateTime   @default(now())
+  status       String     // CONFIRMED, CANCELLED, USED
+}
+
+model SearchAttempt {
+  id        String   @id @default(cuid())
+  searchId  String
+  search    Search   @relation(fields: [searchId], references: [id])
+  status    String   // SUCCESS, FAILED
+  message   String?
+  createdAt DateTime @default(now())
+}
